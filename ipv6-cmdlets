@@ -1,0 +1,316 @@
+Demo 1:
+# - Chapter 5 - IPv6 and PowerShell
+# - IPv6 only PowerShell cmdlets
+Get-NetIPv6Protocol
+Set-NetIPv6Protocol
+#
+# - Randomize IPv6 Addresses for Privacy
+# turn off privacy addressing (make it do EUI-64)
+Set-NetIPv6Protocol -RandomizeIdentifiers Disabled
+# turn back on privacy addressing
+Set-NetIPv6Protocol -RandomizeIdentifiers Enabled
+#
+# - Temporary IPv6 Address Behavior
+# - turn off temporary addressing
+Set-NetIPv6Protocol -UseTemporaryAddresses Disabled
+# - turn back on temporary addressing
+Set-NetIPv6Protocol -UseTemporaryAddresses Enabled
+#
+# - Physical and Logical Interfaces
+Get-NetAdapter
+Set-NetAdapter
+Disable-NetAdapter
+Enable-NetAdapter
+Rename-NetAdapter 
+Restart-NetAdapter
+# - examples of the above cmdlets
+# - Disable an example Wi-Fi adapter
+Disable-NetAdapter -InterfaceDescription 'Intel(R) Centrino(R) Advanced-N 6205' -Confirm:$false
+# - Enable the example Wi-Fi adapter
+Enable-NetAdapter -InterfaceDescription 'Intel(R) Centrino(R) Advanced-N 6205' -Confirm:$false
+# - Rename the adapter
+Rename-NetAdapter  -Name <current name> -NewName <new name>
+# - Disable then Enable the adapter
+Restart-NetAdapter
+#
+# - Interface Management
+Get-NetIPAddress
+New-NetIPAddress
+Set-NetIPAddress
+Remove-NetIPAddress
+Get-NetIPConfiguration
+# - examples of the above cmdlets
+# - see if any existing IP addresses are assigned to interface 20 (Wi-Fi)
+Get-NetIPAddress â€“InterfaceIndex 20
+# - Set the IP address on the interface for the first time using PowerShell
+New-NetIPAddress -InterfaceIndex 12 -IPAddress 2001:0db8:cafe:0010::1 -PrefixLength 64 -DefaultGateway 2001:0db8:cafe:0010::254
+# - If you are modifying an existing server IP stack you will need to use PowerShell
+Set-NetIPAddress -InterfaceIndex 12 -IPAddress 2001:0db8:cafe:0010::2 -PrefixLength 64
+# - Remove the IP address on the interface
+Remove-NetIPAddress -InterfaceIndex 12 -Confirm:$false
+#
+# - Routing Management
+Get-NetRoute
+New-NetRoute
+Remove-NetRoute
+# - examples of the above cmdlets
+# - see the existing IPv6 routing table
+Get-NetRoute -AddressFamily IPv6
+# - add an example IPv6 route to the routing table
+New-NetRoute -DestinationPrefix 2600::/12 -InterfaceIndex 20 -NextHop fe80::5ef:b5a3:2ab1:54ce -Publish Yes -RouteMetric 256
+# - remove an example IPv6 route to the routing table
+Remove-NetRoute -DestinationPrefix 2600::/12 -Confirm:$false
+#
+# - DNS Client Management
+Get-DnsClientServerAddress
+Set-DnsClientServerAddress
+# - see the existing DNS resolver IPv6 addresses on a Windows host
+Get-DnsClientServerAddress -AddressFamily IPv6
+# - set the IPv6 DNS resolvers to 2001:4860:4860::8888 and 2001:4860:4860::8844
+Set-DnsClientServerAddress -InterfaceIndex 20 -ServerAddresses("2001:4860:4860::8888","2001:4860:4860::8844")
+# - restore the DNS settings to what DHCP provided
+Set-DnsClientServerAddress -InterfaceIndex 20 -ResetServerAddresses
+#
+# - 6to4 transition technology
+Get-Net6to4Configuration
+Set-Net6to4Configuration
+Reset-Net6to4Configuration
+# - first check the 6to4 status with PowerShell
+Get-Net6to4Configuration
+# - show the status with netsh
+netsh interface ipv6 6to4 show state
+# - turn off 6to4
+Set-Net6to4Configuration -State Disabled 
+# - same task with netsh
+netsh interface ipv6 6to4 set state disable 
+#
+# - ISATAP transition technology
+Get-NetIsatapConfiguration
+Set-NetIsatapConfiguration
+Reset-NetIsatapConfiguration
+# - first check the ISATAP status
+Get-NetIsatapConfiguration
+# - show the status
+netsh interface ipv6 isatap show state
+# - turn off ISATAP
+Set-NetIsatapConfiguration -State Disabled
+Set-NetIsatapConfiguration -ResolutionState Disabled
+# - same task with netsh
+netsh interface isatap set state disable
+netsh interface isatap set router state disable 
+#
+# - Teredo transition technology
+Get-NetTeredoConfiguration
+Get-NetTeredoState
+Set-NetTeredoConfiguration
+Reset-NetTeredoConfiguration
+# - Teredo status
+Get-NetTeredoConfiguration
+Get-NetTeredoState
+# - show the status with netsh
+netsh interface teredo show state
+# - turn off teredo 
+Set-NetTeredoConfiguration -Type Disabled
+# - same task with netsh
+netsh interface teredo set state type=Disabled
+#
+# - EOF
+
+
+Demo 2:
+# - Chapter 3 - IPv6 Addressing
+# - Enable ISATAP forwarding:
+# - ISATAP Router PowerShell configuration example for Windows Server 2012 and 2012 R2
+Set-NetIPInterface -InterfaceAlias <Name> -AddressFamily IPv6 -Forwarding Enabled -Advertising Enabled
+# - ISATAP Router netsh configuration example for Windows Server 2008 and 2008 R2
+netsh interface ipv6 set interface <ISATAP Interface Name or Index> forwarding=enabled advertise=enabled
+#
+# - Enable ISATAP routing and publish the route for the ISATAP prefix:
+# - ISATAP PowerShell configuration example for Windows Server 2012 and 2012 R2
+New-NetRoute -DestinationPrefix <Prefix> -InterfaceAlias <Name> -AddressFamily IPv6 -Publish Yes
+# - ISATAP netsh configuration example for Windows Server 2008 and 2008 R2
+netsh interface ipv6 add route <Address/Prefix> <ISATAP Interface Name or Index> publish=yes
+#
+# - Enable the ISATAP interface:
+# - ISATAP PowerShell configuration example for Windows Server 2012 and 2012 R2
+Set-NetIsatapConfiguration -Router <IPv4 address>
+# - ISATAP netsh configuration example for Windows Server 2008 and 2008 R2
+netsh interface isatap set router <IPv4 Address or name>
+#
+# - Teredo
+# - Teredo status PowerShell example
+Get-NetTeredoConfiguration 
+# - Teredo status netsh example
+netsh interface teredo show state 
+#
+# - Configure the Teredo Server in PowerShell
+Set-NetTeredoConfiguration -Type server -ServerName <Name or IP Address>
+# - Configure the Teredo Server in netsh
+netsh interface teredo set state type=server servername=<Name or IP Address>
+#
+# - Configure the Teredo Relay with routing in PowerShell
+Set-NetIPInterface -InterfaceAlias <Name> -AddressFamily IPv6 -Forwarding Enabled
+# - Configure the Teredo Relay with routing in netsh
+netsh interface ipv6 set interface <Interface Name or Index Number> forwarding=enabled
+#
+# - Turn on Shunt for Teredo
+Set-NetTeredoConfiguration -ServerShunt $True
+Reset-NetTeredoConfiguration -ServerShunt
+# - Confirm Shunt is on for Teredo
+Get-NetTeredoConfiguration
+#
+# - Configure Teredo Clients with PowerShell
+Set-NetTeredoConfiguration -ServerName <name>
+# - Configure Teredo Clients with netsh
+netsh interface teredo set state servername=<IPv4 address>
+#
+# - Multicast
+# - Display the multicast addresses on a host's interface
+netsh interface ipv6 show joins <interface id>
+# - Display the multicast neighbors on a host's interface
+Get-NetNeighbor -AddressFamily IPv6 -InterfaceIndex <interface id> | ft
+# - Remove the multicast neighbor entries on a host
+Remove-NetNeighbor -AddressFamily IPv6 -Confirm:$false
+#
+# - Random IDs
+# - turn off random addressing (make it do EUI-64) with PowerShell
+Set-NetIPv6Protocol -RandomizeIdentifiers Disabled
+# - turn back on random addressing with PowerShell
+Set-NetIPv6Protocol -RandomizeIdentifiers Enabled    
+#- shutting off random extension (force EUI-64) with netsh
+netsh interface ipv6 set global randomizeidentifiers=disabled store=active
+netsh interface ipv6 set global randomizeidentifiers=disabled store=persistent
+#
+# - Temporary IPv6 Address
+# - turn off temporary addressing with PowerShell
+Set-NetIPv6Protocol -UseTemporaryAddresses Disabled
+# - turn back on temporary addressing with PowerShell
+Set-NetIPv6Protocol -UseTemporaryAddresses Enabled
+# - shutting off temporary addresses
+netsh interface ipv6 set privacy state=disabled store=active
+netsh interface ipv6 set privacy state=disabled store=persistent
+
+# - Manually setting IPv6 Addresses
+# Set the IP address on the interface for the first time using PowerShell
+New-NetIPAddress -InterfaceIndex 12 -IPAddress 2001:0db8:cafe:0010::1 -PrefixLength 64 -DefaultGateway 2001:0db8:cafe:0010::254
+# If you are modifying an existing server IP stack you will need to use PowerShell
+Set-NetIPAddress -InterfaceIndex 12 -IPAddress 2001:0db8:cafe:0010::2 -PrefixLength 64
+# - EOF
+
+Demo 3:
+# - Chapter 8 - IPv6 and DNS
+# - Installing DNS
+Add-WindowsFeature DNS
+Get-WindowsFeature DNS
+# - to modify the DNS listener IP address
+Get-DnsServer | Export-Clixml -Path "c:\DnsServerConfig1.xml"
+# - import the DNS listener file back in (it replaces the file)
+$x = Import-Clixml "c:\DnsServerConfig1.xml"
+Set-DnsServer -InputObject $x
+#
+# - IPv6 DNS resource entries
+Add-DnsServerPrimaryZone
+Add-DnsServerResourceRecordAAAA
+Remove-DnsServerResourceRecord
+# - build out the example.com zone
+Add-DnsServerPrimaryZone -Name "example.com" -ZoneFile "example.com.dns"
+# - build out an AAAA record
+Add-DnsServerResourceRecordAAAA -Name "ipv6host" -ZoneName "example.com" -CreatePtr -AllowUpdateAny -IPv6Address "2001:db8:a::1" -TimeToLive 08:00:00
+# - as an alternative do
+Add-DnsServerResourceRecord -AAAA -Name "ipv6host" -ZoneName "example.com" -CreatePtr -AllowUpdateAny -IPv6Address "2001:db8:a::1" -TimeToLive 08:00:00
+# - remove the record
+Remove-DnsServerResourceRecord -name "ipv6host" -ZoneName "example.com" -RRType AAAA -Force
+#
+# - Get DNS query block list
+Get-DnsServerGlobalQueryBlockList
+# - Root Hint information
+Get-DnsServerRootHint
+Import-DnsServerRootHint
+Add-DnsServerRootHint
+Remove-DnsServerRootHint
+# - example PowerShell cmdlet to see unique root level servers
+Get-DnsServerRootHint | sort-object -property{$_.NameServer.RecordData.NameServer} -Unique
+# - removing a.root-servers.net
+Remove-DnsServerRootHint -NameServer "a.root-servers.net"
+# - adding a new a.root-server.net entry
+Add-DnsServerRootHint -NameServer "a.root-servers.net" -IPAddress 2001:503:ba3e::2:30
+# - check for the change
+Get-DnsServerRootHint | Where-Object {$_.NameServer.RecordData.NameServer -EQ "a.root-servers.net."} | Sort-Object -Unique
+#
+Get-DnsServerSetting
+Test-DnsServer
+# - example of testing DNS
+Test-DnsServer -IPAddress ::1 -ZoneName "example.com"
+# - check for the DNS Server module
+Get-Command -Module DNSServer
+#
+# - DNS client settings
+Get-DnsClientServerAddress
+# - For IPv6 only
+Get-DnsClientServerAddress -AddressFamily IPv6
+# - set new DNS resolver server IPs
+Set-DnsClientServerAddress -InterfaceIndex 4 -ServerAddresses("2001:4860:4860::8888","2001:4860:4860::8844")
+# - check the DNS resolver settings
+Get-DnsClientServerAddress -InterfaceIndex 4 -AddressFamily IPv6
+# - test against the default DNS resolvers
+Resolve-DnsName -Name www.cav6tf.org -Type AAAA
+# - test against a specific DNS resolver
+Resolve-DnsName -Name www.cav6tf.org -Type AAAA -Server 2001:4860:4860::8888
+# - script to determine which interface a name resolver will use to connect to a resource
+$rn = Resolve-DnsName -name www.cav6tf.org -type AAAA
+Find-NetRoute -RemoteIPAddress $rn.ip6address
+# - EOF
+
+Demo 4:
+# - Chapter 10 - Miscellaneous IPv6
+# - NCSI
+# - example that modifies the ncsi url location
+Set-NCSIPolicyConfiguration -CorporateWebsiteProbeURL http://ipv6.ncsi.example.com -policystore Howfunky
+# - get the ncsi policy
+Get-NCSIPolicyConfiguration
+# - reset back to default the ncsi policy on host "Howfunky"
+Reset-NCSIPolicyConfiguration -PolicyStore Howfunky
+#
+# - prefix policy table
+# - get the prefix policy table
+Get-NetPrefixPolicy
+# - netsh commands to manage the prefix policy table
+netsh interface ipv6 show prefixpolicies
+netsh interface ipv6 add prefixpolicy <prefix> <precedence> <label>
+netsh interface ipv6 set prefixpolicy <prefix> <precedence> <label>
+netsh interface ipv6 remove prefixpolicy <prefix> <precedence> <label>
+# - sample script to get an RFC 3484 host to RFC 6724
+netsh int ipv6 add prefixpolicy 3ffe::/16 1 12 store=persistent
+netsh int ipv6 add prefixpolicy fec0::/10 1 11 store=persistent
+netsh int ipv6 add prefixpolicy fc00::/8 4 13 store=persistent
+netsh int ipv6 add prefixpolicy fd00::/8 3 14 store=persistent
+netsh int ipv6 add prefixpolicy ::/96 1 3 store=persistent
+netsh int ipv6 add prefixpolicy ::ffff:0:0/96 35 4 store=persistent
+# - EOF
+
+Demo 5:
+#---
+# multicast
+# - mld vserion 2
+Set-NetIPv6Protocol MldVersion=3
+#
+# netsh command
+netsh interface ipv6 set global mldversion=version2
+#
+# - set igmp v2
+Set-NetIPv6Protocol MldVersion=2
+#
+#
+resolve-dnsname -name www.cav6tf.org -LlmnrOnly
+#
+#---
+# multicast
+netsh interface ipv6 show joins
+Get-NetIPAddress -AddressFamily ipv6 -InterfaceIndex 4 | ft
+netsh interface ipv6 show joins interface=4
+#
+#
+# - script to determine which interface a name resolver will use to connect to a resource
+$rn = Resolve-DnsName -name www.cav6tf.org -type AAAA
+Find-NetRoute -RemoteIPAddress $rn.ip6address
+# - EOF
